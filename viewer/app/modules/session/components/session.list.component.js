@@ -184,11 +184,41 @@
           if (parseInt(this.$routeParams.openAll) === 1) {
             this.openAll();
           }
+
+          // TODO ECR
+          this.initializeColResizable();
         })
         .catch((error) => {
           this.error    = error;
           this.loading  = false;
         });
+    }
+
+    // TODO ECR - document
+    initializeColResizable() {
+      $('#sessionsTable').colResizable({
+        hoverCursor     : 'col-resize',
+        minWidth        : 40,
+        onResize        : (event) => {
+          let headerRow = event.currentTarget.getElementsByTagName('tr')[0];
+          for (let i = 0, len = headerRow.children.length; i < len; ++i) {
+            let cell = headerRow.children[i];
+            let width = cell.offsetWidth;
+            if (i > 0) { // first column isn't represented, it just is
+              if (this.tableState.visibleHeaders[i-1].contains(':')) {
+                let array = this.tableState.visibleHeaders[i-1].split(':');
+                array[1] = width;
+                this.tableState.visibleHeaders[i-1] = `${array[0]}:${array[1]}`;
+              } else {
+                this.tableState.visibleHeaders[i-1] = this.tableState.visibleHeaders[i-1] + `:${width}`;
+              }
+            }
+          }
+          console.log(this.tableState);
+          this.saveTableState();
+        },
+        disabledColumns : [0]
+      });
     }
 
     /* Gets the current user's settings */
@@ -291,10 +321,21 @@
     mapHeadersToFields() {
       this.headers = [];
       for (let i = 0, len = this.tableState.visibleHeaders.length; i < len; ++i) {
-        let headerId  = this.tableState.visibleHeaders[i];
-        let field     = this.getField(headerId);
+        let headerId = this.tableState.visibleHeaders[i];
+        let width;
 
-        if (field) { this.headers.push(field); }
+        if (headerId.contains(':')) {
+          let array = headerId.split(':');
+          headerId  = array[0];
+          width     = array[1];
+        }
+
+        let field = this.getField(headerId);
+
+        if (field) {
+          if (width) { field.width = width; }
+          this.headers.push(field);
+        }
       }
     }
 
@@ -336,6 +377,11 @@
 
     /* reloads the data in the table (even one time bindings) */
     reloadTable() {
+      // TODO ECR - is this needed?
+      $('#sessionsTable').colResizable({
+        disable:true
+      });
+
       this.loading      = true;
       this.showSessions = false;
       this.$scope.$broadcast('$$rebind::refresh');
@@ -346,6 +392,9 @@
         this.loading      = false;
         this.showSessions = true;
         this.$scope.$broadcast('$$rebind::refresh');
+
+        // TODO ECR - is this needed?
+        this.initializeColResizable();
       });
     }
 
@@ -575,7 +624,13 @@
      * @return {number} number  The index of the visible header
      */
     isVisible(id) {
-      return this.tableState.visibleHeaders.indexOf(id);
+      for (let i = 0, len = this.tableState.visibleHeaders.length; i < len; ++i) {
+        let headerid = this.tableState.visibleHeaders[i];
+        if (headerid.contains(':')) { headerid = headerid.split(':')[0]; }
+        if (id === headerid) { return i; }
+      }
+
+      return -1;
     }
 
     /**
@@ -597,7 +652,18 @@
       } else { // it's hidden
         reloadData = true; // requires a data reload
         // add it to the visible headers list
+
+        // TODO ECR make sure end column is bigger than 100
+        let len = this.tableState.visibleHeaders.length;
+        if (this.tableState.visibleHeaders[len-1].contains(':')) {
+          let array = this.tableState.visibleHeaders[len-1].split(':');
+          let width = array[1] - 100;
+          this.tableState.visibleHeaders[len-1] = `${array[0]}:${width}`;
+        }
+        id = `${id}:100`; // start with 100px width
+
         this.tableState.visibleHeaders.push(id);
+        console.log(this.tableState.visibleHeaders); // TODO REMOVE
       }
 
       this.reloadTable();
