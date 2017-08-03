@@ -41,7 +41,7 @@
 
         <thead>
           <tr>
-            <th ng-drop="true" draggable="false" width="80"
+            <th ng-drop="true" draggable="false" width="90" style="width:90px!important;max-width:90px!important;min-width:90px!important;"
               ng-drop-success="$ctrl.onDropComplete(-1, $data, $event)">
 
               <!-- column visibility button -->
@@ -146,9 +146,9 @@
 
             </th>
 
-            <!-- table headers -->
+            <!-- table headers --><!-- TODO ECR - ng-style works, but is it right...? -->
             <th ng-repeat="header in $ctrl.headers track by header.dbField"
-              class="moloch-col-header" ng-drop="true" width="{{header.width}}"
+              class="moloch-col-header" ng-drop="true" width="{{:refresh:header.width}}" ng-style="{'width':header.width+'%'}"
               ng-drop-success="$ctrl.onDropComplete($index, $data, $event)"
               ng-drag="true" ng-drag-data="header" draggable="false"
               ng-class="{'active':$ctrl.isSorted(header.sortBy || header.dbField) >= 0}">
@@ -254,7 +254,7 @@
                 <div ng-if="::(header.dbField === 'info')" class="cursor-pointer">
                   {{::header.friendlyName}}
                 </div>
-
+                {{header.width}}<!-- TODO ECR - remove -->
               </div>
             </th> <!-- /table headers -->
           </tr>

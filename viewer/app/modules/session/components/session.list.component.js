@@ -197,13 +197,15 @@
     // TODO ECR - document
     initializeColResizable() {
       $('#sessionsTable').colResizable({
-        hoverCursor     : 'col-resize',
         minWidth        : 40,
+        // disabledColumns : [0],
+        hoverCursor     : 'col-resize',
         onResize        : (event) => {
           let headerRow = event.currentTarget.getElementsByTagName('tr')[0];
+          let headerRowWidth = headerRow.offsetWidth;
           for (let i = 0, len = headerRow.children.length; i < len; ++i) {
             let cell = headerRow.children[i];
-            let width = cell.offsetWidth;
+            let width = Math.trunc(100*(cell.offsetWidth/headerRowWidth));
             if (i > 0) { // first column isn't represented, it just is
               if (this.tableState.visibleHeaders[i-1].contains(':')) {
                 let array = this.tableState.visibleHeaders[i-1].split(':');
@@ -216,8 +218,8 @@
           }
           console.log(this.tableState);
           this.saveTableState();
-        },
-        disabledColumns : [0]
+          this.mapHeadersToFields();
+        }
       });
     }
 
@@ -377,6 +379,7 @@
 
     /* reloads the data in the table (even one time bindings) */
     reloadTable() {
+      console.log('RELOAD TABLE'); // TODO ECR - remove
       // TODO ECR - is this needed?
       $('#sessionsTable').colResizable({
         disable:true
@@ -393,6 +396,7 @@
         this.showSessions = true;
         this.$scope.$broadcast('$$rebind::refresh');
 
+        $(window).trigger('resize');
         // TODO ECR - is this needed?
         this.initializeColResizable();
       });
@@ -646,22 +650,36 @@
       let index = this.isVisible(id);
 
       if (index >= 0) { // it's visible
+        // add the column width to the previous column if it exists,
+        // add the column width to the next column if not
+        let colIdx = 1;
+        if (index > 0) { colIdx = index-1; }
+
+        if (this.tableState.visibleHeaders[colIdx].contains(':')) {
+          let otherCol    = this.tableState.visibleHeaders[colIdx].split(':');
+          let removedCol  = this.tableState.visibleHeaders[index].split(':');
+          let width       = otherCol[1]*1 + removedCol[1]*1;
+          this.tableState.visibleHeaders[colIdx] = `${otherCol[0]}:${width}`;
+        }
+
         // remove it from the visible headers list
         this.tableState.visibleHeaders.splice(index,1);
         reloadData = this.updateSort(sort || id);
       } else { // it's hidden
         reloadData = true; // requires a data reload
-        // add it to the visible headers list
-
-        // TODO ECR make sure end column is bigger than 100
+        // remove the column width from the last column
+        // TODO ECR - remove it from last column OR take a bit from every column?
         let len = this.tableState.visibleHeaders.length;
         if (this.tableState.visibleHeaders[len-1].contains(':')) {
           let array = this.tableState.visibleHeaders[len-1].split(':');
+          // TODO ECR make sure end column is bigger than 100
+          // if it's not, split the difference?
           let width = array[1] - 100;
           this.tableState.visibleHeaders[len-1] = `${array[0]}:${width}`;
         }
         id = `${id}:100`; // start with 100px width
 
+        // add it to the visible headers list
         this.tableState.visibleHeaders.push(id);
         console.log(this.tableState.visibleHeaders); // TODO REMOVE
       }
