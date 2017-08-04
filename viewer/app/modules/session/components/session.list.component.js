@@ -10,8 +10,8 @@
   };
 
   const defaultTableState = {
-    order         : [['fp', 'asc']],
-    visibleHeaders: ['fp','lp','src','p1','dst','p2','pa','dbby','no','info']
+    order         : [['fp', 'desc']],
+    visibleHeaders: ['fp:7','lp:7','src:15','p1:5','dst:15','p2:5','pa:7','dbby:9','no:6','info:18']
   };
 
   let customCols = require('json!./custom.columns.json');
@@ -185,7 +185,7 @@
             this.openAll();
           }
 
-          // TODO ECR
+          // there is data (to populate the table), initialize resizable columns
           this.initializeColResizable();
         })
         .catch((error) => {
@@ -194,19 +194,18 @@
         });
     }
 
-    // TODO ECR - document
+    /* Initializes resizable columns */
     initializeColResizable() {
       $('#sessionsTable').colResizable({
         minWidth        : 40,
-        // disabledColumns : [0],
         hoverCursor     : 'col-resize',
         onResize        : (event) => {
           let headerRow = event.currentTarget.getElementsByTagName('tr')[0];
           let headerRowWidth = headerRow.offsetWidth;
           for (let i = 0, len = headerRow.children.length; i < len; ++i) {
             let cell = headerRow.children[i];
-            let width = Math.trunc(100*(cell.offsetWidth/headerRowWidth));
-            if (i > 0) { // first column isn't represented, it just is
+            let width = Math.trunc(1000*(cell.offsetWidth/headerRowWidth))/10;
+            if (i > 0) { // first column isn't represented in visibleHeaders
               if (this.tableState.visibleHeaders[i-1].contains(':')) {
                 let array = this.tableState.visibleHeaders[i-1].split(':');
                 array[1] = width;
@@ -216,7 +215,6 @@
               }
             }
           }
-          console.log(this.tableState);
           this.saveTableState();
           this.mapHeadersToFields();
         }
@@ -379,11 +377,8 @@
 
     /* reloads the data in the table (even one time bindings) */
     reloadTable() {
-      console.log('RELOAD TABLE'); // TODO ECR - remove
-      // TODO ECR - is this needed?
-      $('#sessionsTable').colResizable({
-        disable:true
-      });
+      // disable resizable columns so it can be initialized after table reloads
+      $('#sessionsTable').colResizable({ disable:true });
 
       this.loading      = true;
       this.showSessions = false;
@@ -396,8 +391,7 @@
         this.showSessions = true;
         this.$scope.$broadcast('$$rebind::refresh');
 
-        $(window).trigger('resize');
-        // TODO ECR - is this needed?
+        // re-initialize resizable columns
         this.initializeColResizable();
       });
     }
@@ -604,7 +598,7 @@
       // set to the first position if dropped on far left column
       if (!newIndex || newIndex < 0) { newIndex = 0; }
 
-      let draggedIndex = this.tableState.visibleHeaders.indexOf(obj.dbField);
+      let draggedIndex = this.isVisible(obj.dbField);
 
       // reorder the visible headers
       if (newIndex >= this.tableState.visibleHeaders.length) {
@@ -654,34 +648,29 @@
         // add the column width to the next column if not
         let colIdx = 1;
         if (index > 0) { colIdx = index-1; }
-
         if (this.tableState.visibleHeaders[colIdx].contains(':')) {
           let otherCol    = this.tableState.visibleHeaders[colIdx].split(':');
           let removedCol  = this.tableState.visibleHeaders[index].split(':');
           let width       = otherCol[1]*1 + removedCol[1]*1;
           this.tableState.visibleHeaders[colIdx] = `${otherCol[0]}:${width}`;
         }
-
         // remove it from the visible headers list
         this.tableState.visibleHeaders.splice(index,1);
         reloadData = this.updateSort(sort || id);
       } else { // it's hidden
         reloadData = true; // requires a data reload
         // remove the column width from the last column
-        // TODO ECR - remove it from last column OR take a bit from every column?
         let len = this.tableState.visibleHeaders.length;
+        let width;
         if (this.tableState.visibleHeaders[len-1].contains(':')) {
           let array = this.tableState.visibleHeaders[len-1].split(':');
-          // TODO ECR make sure end column is bigger than 100
-          // if it's not, split the difference?
-          let width = array[1] - 100;
+          // split the last column in half to add to the new column
+          width = Math.trunc(10*(array[1]/2))/10;
           this.tableState.visibleHeaders[len-1] = `${array[0]}:${width}`;
+          id = `${id}:${width}`; // start with half of the last column's width
         }
-        id = `${id}:100`; // start with 100px width
-
         // add it to the visible headers list
         this.tableState.visibleHeaders.push(id);
-        console.log(this.tableState.visibleHeaders); // TODO REMOVE
       }
 
       this.reloadTable();

@@ -36,8 +36,7 @@ session table thead tr th {
   border-bottom : 2px solid #ddd;
   border-right  : 1px dotted var(--color-gray);
 }
-session table thead tr th:last-child,
-session table thead tr th:first-child {
+session table thead tr th:last-child {
   border-right: none;
 }
 
