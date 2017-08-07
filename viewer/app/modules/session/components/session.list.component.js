@@ -328,6 +328,8 @@
           let array = headerId.split(':');
           headerId  = array[0];
           width     = array[1];
+        } else { // if no width is set, split the width evenly among columns
+          width = (100/(len+1));
         }
 
         let field = this.getField(headerId);
@@ -707,7 +709,7 @@
 
       this.saveTableState();
 
-      this.getData(true);
+      this.getData(false);
     }
 
     /* Saves a custom column configuration */

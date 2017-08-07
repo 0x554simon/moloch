@@ -1,6 +1,5 @@
 {
   "info": {
-    "width": 250,
     "dbField": "info",
     "exp": "info",
     "group": "general",
@@ -10,7 +9,6 @@
     "children": ["us", "esrc", "edst", "esub", "efn", "dnsho", "tls.alt", "ircch"]
   },
   "src": {
-    "width": 140,
     "dbField": "src",
     "exp": "src",
     "group": "general",
@@ -20,7 +18,6 @@
     "children": ["a1", "g1"]
   },
   "dst": {
-    "width": 140,
     "dbField": "dst",
     "exp": "dst",
     "group": "general",
@@ -30,7 +27,6 @@
     "children": ["a2", "g2"]
   },
   "dbby": {
-    "width": 120,
     "dbField": "dbby",
     "exp": "dbby",
     "group": "general",
@@ -40,7 +36,6 @@
     "children": ["db", "by"]
   },
   "pa1pa2": {
-    "width": 120,
     "dbField": "pa1pa2",
     "exp": "pa1pa2",
     "group": "general",
@@ -50,7 +45,6 @@
     "children": ["pa1", "pa2"]
   },
   "db1db2": {
-    "width": 140,
     "dbField": "db1db2",
     "exp": "db1db2",
     "group": "general",
@@ -60,7 +54,6 @@
     "children": ["db1", "db2"]
   },
   "by1by2": {
-    "width": 120,
     "dbField": "by1by2",
     "exp": "by1by2",
     "group": "general",
@@ -70,7 +63,6 @@
     "children": ["by1", "by2"]
   },
   "db1by1": {
-    "width": 140,
     "dbField": "db1by1",
     "exp": "db1by1",
     "group": "general",
@@ -80,7 +72,6 @@
     "children": ["db1", "by1"]
   },
   "db2by2": {
-    "width": 140,
     "dbField": "db2by2",
     "exp": "db2by2",
     "group": "general",

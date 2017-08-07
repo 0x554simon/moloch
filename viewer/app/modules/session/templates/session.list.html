@@ -34,7 +34,7 @@
     <div class="table-responsive margined-top-lg">
 
       <!-- session data table -->
-      <table ng-if="::($ctrl.headers)" id="sessionsTable"
+      <table ng-if="$ctrl.headers && $ctrl.headers.length" id="sessionsTable"
         width="100%" border="0" cellpadding="0" cellspacing="0"
         class="table-striped">
 
@@ -148,7 +148,8 @@
 
             <!-- table headers -->
             <th ng-repeat="header in $ctrl.headers track by header.dbField"
-              class="moloch-col-header" ng-drop="true" width="{{:refresh:header.width}}" ng-style="{'width':header.width+'%'}"
+              class="moloch-col-header" ng-drop="true" width="{{header.width+'%'}}"
+              ng-style="{'width':header.width+'%'}"
               ng-drop-success="$ctrl.onDropComplete($index, $data, $event)"
               ng-drag="true" ng-drag-data="header" draggable="false"
               ng-class="{'active':$ctrl.isSorted(header.sortBy || header.dbField) >= 0}">
