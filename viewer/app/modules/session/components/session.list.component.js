@@ -292,19 +292,20 @@
      * Maps visible column headers to their corresponding fields
      */
     mapHeadersToFields() {
+      console.log('map headers to fields'); // TODO ECR - remove
       this.headers = [];
       let colWidths;
-      // TODO ECR - set widths of stuff? or do this with jquery?
+
       if (localStorage['session-column-widths']) {
         colWidths = JSON.parse(localStorage['session-column-widths']);
       }
+
       for (let i = 0, len = this.tableState.visibleHeaders.length; i < len; ++i) {
         let headerId  = this.tableState.visibleHeaders[i];
         let field     = this.getField(headerId);
 
         if (field) {
           if (colWidths && colWidths[headerId]) {
-            // console.log('has width:', headerId, colWidths[headerId]);
             field.width = colWidths[headerId];
           }
           this.headers.push(field);
@@ -350,12 +351,12 @@
 
     /* reloads the data in the table (even one time bindings) */
     reloadTable() {
-      // TODO ECR - disable resizable columns so it can be initialized after table reloads
+      // disable resizable columns so it can be initialized after table reloads
+      $('#sessionsTable').colResizable({ disable:true });
+
       this.loading      = true;
       this.showSessions = false;
       this.$scope.$broadcast('$$rebind::refresh');
-
-      this.mapHeadersToFields();
 
       this.$timeout(() => {
         this.loading      = false;
@@ -756,7 +757,8 @@
     /* Initializes resizable columns */
     initializeColResizable() {
       console.log('initialize col resizable'); // TODO ECR - remove
-      $('#sessionsTable').colResizable({
+      let sessionsTable = $('#sessionsTable');
+      sessionsTable.colResizable({
         minWidth        : 50,
         headerOnly      : true,
         resizeMode      : 'overflow',
@@ -766,19 +768,15 @@
           console.log('on resize');
           let headerRow = event.currentTarget.getElementsByTagName('tr')[0];
           let colWidths = {};
-          // let colWidths = [];
           for (let i = 0, len = headerRow.children.length; i < len; ++i) {
             let cell = headerRow.children[i];
             let width = cell.offsetWidth;
             if (i > 0) { // first column is static, so skip it
               colWidths[this.headers[i-1].dbField] = width;
-              // colWidths.push({id: this.tableState.visibleHeaders[i-1], width: width});
             }
           }
-          console.log(colWidths); // TODO ECR - remove
           this.colWidths = colWidths;
           localStorage['session-column-widths'] = JSON.stringify(colWidths);
-          this.mapHeadersToFields();
         }
       });
     }

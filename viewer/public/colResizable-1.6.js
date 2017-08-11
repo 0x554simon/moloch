@@ -164,7 +164,7 @@
         m+=w;					//carriage is updated to obtain the full size used by columns
       }
       S[t.id]+=m;							//the last item of the serialized string is the table's active area (width),
-                               //to be able to obtain % width value of each columns while deserializing
+      //to be able to obtain % width value of each columns while deserializing
       if(!t.f) S[t.id] += ";"+t.width(); 	//if not fixed, table width is stored
     }
   };
@@ -212,7 +212,8 @@
     }
   };
 
-
+  // TODO ECR - document this change
+  var applyBoundsCalls = 0;
   /**
    * This function updates all columns width according to its real width. It must be taken into account that the
    * sum of all columns can exceed the table width in some cases (if fixed is set to false and table has some kind
@@ -227,8 +228,10 @@
     $.each(t.c, function(i,c){
       c.width(w[i]).w = w[i];				//set column widths applying bounds (table's max-width)
     });
-    // TODO ECR - does this mess other stuff up?
-    // t.addClass(FLEX);						//allow table width changes
+    if (applyBoundsCalls > 1) {
+      t.addClass(FLEX);						//allow table width changes
+    }
+    applyBoundsCalls++;
   };
 
 
@@ -272,6 +275,7 @@
       var cb = t.opt.onDrag;							//check if there is an onDrag callback
       if (cb) { e.currentTarget = t[0]; cb(e); }		//if any, it is fired
     } else if (last) {
+      // IMPORTANT! Added this so that modifying the last column still updates the table width
       c.width(drag.w);
       if(!t.f && t.opt.overflow){			//if overflow is set, incriment min-width to force overflow
         t.css('min-width', t.w + x - drag.l);
@@ -288,13 +292,14 @@
    * @param {event} e - grip's drag over event
    */
   var onGripDragOver = function(e){
-
     d.unbind('touchend.'+SIGNATURE+' mouseup.'+SIGNATURE).unbind('touchmove.'+SIGNATURE+' mousemove.'+SIGNATURE);
     $("head :last-child").remove(); 				//remove the dragging cursor style
     if(!drag) return;
     drag.removeClass(drag.t.opt.draggingClass);		//remove the grip's dragging css-class
     if (!(drag.x - drag.l == 0)) {
       var t = drag.t;
+      // IMPORTANT! the following line is needed so that syncCols calculates column widths appropriately
+      t.addClass(FLEX);
       var cb = t.opt.onResize; 	    //get some values
       var i = drag.i;                 //column index
       var last = i == t.ln-1;         //check if it is the last column's grip (usually hidden)
@@ -369,8 +374,7 @@
 
 
   //bind resize event, to update grips position
-  // TODO ECR - maybe only bind when c.f is not true?
-  // $(window).bind('resize.'+SIGNATURE, onResize);
+  $(window).bind('resize.'+SIGNATURE, onResize);
 
 
   /**

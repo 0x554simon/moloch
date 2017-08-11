@@ -31,17 +31,17 @@
     <sticky-sessions ng-if="$ctrl.stickySessions.length"
       sessions="$ctrl.stickySessions"></sticky-sessions>
 
-    <div class="margined-top-lg overflow-container">
+    <div class="margined-top-lg margined-right">
 
       <!-- session data table -->
       <table ng-if="$ctrl.headers && $ctrl.headers.length" id="sessionsTable"
-        border="0" cellpadding="0" cellspacing="0" style="width:100% !important;"
+        border="0" cellpadding="0" cellspacing="0" style="width:100%!important;"
         class="table-striped">
 
         <thead>
           <tr>
 
-            <th ng-drop="true" draggable="false" style="width:80px;white-space:nowrap;"
+            <th ng-drop="true" draggable="false" style="white-space:nowrap;width:80px;"
               ng-drop-success="$ctrl.onDropComplete(-1, $data, $event)">
 
               <!-- column visibility button -->
@@ -153,107 +153,109 @@
               ng-drag="true" ng-drag-data="header" draggable="false"
               ng-class="{'active':$ctrl.isSorted(header.sortBy || header.dbField) >= 0}">
 
-              <!-- column dropdown menu -->
-              <div class="btn-group pull-right" uib-dropdown>
-                <button type="button" uib-dropdown-toggle class="btn btn-xs btn-default">
-                  <span class="fa fa-caret-down"></span>
-                </button>
-                <ul class="dropdown-menu cursor-pointer" uib-dropdown-menu>
-                  <div>
-                    <li role="menuitem">
-                      <a ng-click="$ctrl.toggleVisibility(header.dbField, header.sortBy)">
-                        Hide Column
-                      </a>
-                    </li>
-                  </div>
-                  <!-- single field column -->
-                  <div ng-if="::(!header.children && header.type !== 'seconds')">
-                    <li class="divider"></li>
-                    <li role="menuitem">
-                      <a ng-click="$ctrl.exportUnique(header.rawField || header.exp, 0)">
-                        Export Unique {{::header.friendlyName}}
-                      </a>
-                    </li>
-                    <li role="menuitem">
-                      <a ng-click="$ctrl.exportUnique(header.rawField || header.exp, 1)">
-                        Export Unique {{::header.friendlyName}} with counts
-                      </a>
-                    </li>
-                    <span ng-if="::(header.portField)">
+              <div class="margined-left-sm margined-right-sm">
+                <!-- column dropdown menu -->
+                <div class="btn-group pull-right" uib-dropdown>
+                  <button type="button" uib-dropdown-toggle class="btn btn-xs btn-default">
+                    <span class="fa fa-caret-down"></span>
+                  </button>
+                  <ul class="dropdown-menu cursor-pointer" uib-dropdown-menu>
+                    <div>
                       <li role="menuitem">
-                        <a ng-click="$ctrl.exportUnique(header.rawField || header.exp + ':' + header.portField, 0)">
-                          Export Unique {{::header.friendlyName}}:Ports
+                        <a ng-click="$ctrl.toggleVisibility(header.dbField, header.sortBy)">
+                          Hide Column
                         </a>
                       </li>
-                      <li role="menuitem">
-                        <a ng-click="$ctrl.exportUnique(header.rawField || header.exp + ':' + header.portField, 1)">
-                          Export Unique {{::header.friendlyName}}:Ports with counts
-                        </a>
-                      </li>
-                    </span>
-                    <li role="menuitem">
-                      <a ng-click="$ctrl.openSpiGraph(header.dbField)">
-                        Open {{::header.friendlyName}} in SPI Graph
-                      </a>
-                    </li>
-                  </div> <!-- /single field column -->
-                  <!-- multiple field column -->
-                  <div ng-if="::(header.children && header.type !== 'seconds')">
-                    <span ng-repeat="child in ::header.children track by child.dbField">
+                    </div>
+                    <!-- single field column -->
+                    <div ng-if="::(!header.children && header.type !== 'seconds')">
                       <li class="divider"></li>
                       <li role="menuitem">
-                        <a ng-click="$ctrl.exportUnique(child.rawField || child.exp, 0)">
-                          Export Unique {{::child.friendlyName}}
+                        <a ng-click="$ctrl.exportUnique(header.rawField || header.exp, 0)">
+                          Export Unique {{::header.friendlyName}}
                         </a>
                       </li>
                       <li role="menuitem">
-                        <a ng-click="$ctrl.exportUnique(child.rawField || child.exp, 1)">
-                          Export Unique {{::child.friendlyName}} with counts
+                        <a ng-click="$ctrl.exportUnique(header.rawField || header.exp, 1)">
+                          Export Unique {{::header.friendlyName}} with counts
                         </a>
                       </li>
-                      <span ng-if="::(child.portField)">
+                      <span ng-if="::(header.portField)">
                         <li role="menuitem">
-                          <a ng-click="$ctrl.exportUnique(child.rawField || child.exp + ':' + child.portField, 0)">
-                            Export Unique {{::child.friendlyName}}:Ports
+                          <a ng-click="$ctrl.exportUnique(header.rawField || header.exp + ':' + header.portField, 0)">
+                            Export Unique {{::header.friendlyName}}:Ports
                           </a>
                         </li>
                         <li role="menuitem">
-                          <a ng-click="$ctrl.exportUnique(child.rawField || child.exp + ':' + child.portField, 1)">
-                            Export Unique {{::child.friendlyName}}:Ports with counts
+                          <a ng-click="$ctrl.exportUnique(header.rawField || header.exp + ':' + header.portField, 1)">
+                            Export Unique {{::header.friendlyName}}:Ports with counts
                           </a>
                         </li>
                       </span>
-                    <li role="menuitem">
-                      <a ng-click="$ctrl.openSpiGraph(child.dbField)">
-                        Open {{::child.friendlyName}} in SPI Graph
-                      </a>
-                    </li>
-                    </span>
+                      <li role="menuitem">
+                        <a ng-click="$ctrl.openSpiGraph(header.dbField)">
+                          Open {{::header.friendlyName}} in SPI Graph
+                        </a>
+                      </li>
+                    </div> <!-- /single field column -->
+                    <!-- multiple field column -->
+                    <div ng-if="::(header.children && header.type !== 'seconds')">
+                      <span ng-repeat="child in ::header.children track by child.dbField">
+                        <li class="divider"></li>
+                        <li role="menuitem">
+                          <a ng-click="$ctrl.exportUnique(child.rawField || child.exp, 0)">
+                            Export Unique {{::child.friendlyName}}
+                          </a>
+                        </li>
+                        <li role="menuitem">
+                          <a ng-click="$ctrl.exportUnique(child.rawField || child.exp, 1)">
+                            Export Unique {{::child.friendlyName}} with counts
+                          </a>
+                        </li>
+                        <span ng-if="::(child.portField)">
+                          <li role="menuitem">
+                            <a ng-click="$ctrl.exportUnique(child.rawField || child.exp + ':' + child.portField, 0)">
+                              Export Unique {{::child.friendlyName}}:Ports
+                            </a>
+                          </li>
+                          <li role="menuitem">
+                            <a ng-click="$ctrl.exportUnique(child.rawField || child.exp + ':' + child.portField, 1)">
+                              Export Unique {{::child.friendlyName}}:Ports with counts
+                            </a>
+                          </li>
+                        </span>
+                      <li role="menuitem">
+                        <a ng-click="$ctrl.openSpiGraph(child.dbField)">
+                          Open {{::child.friendlyName}} in SPI Graph
+                        </a>
+                      </li>
+                      </span>
+                    </div>
+                  </ul> <!-- /multiple field column -->
+                </div> <!-- /column dropdown menu -->
+
+                <!-- sortable column -->
+                <span ng-if="::((header.exp || header.sortBy) && !header.unsortable)"
+                  ng-mousedown="$ctrl.mouseDown()" ng-mouseup="$ctrl.mouseUp()"
+                  ng-click="$ctrl.sortBy($event, header.sortBy || header.dbField)"
+                  class="cursor-pointer">
+                  <div class="header-sort">
+                    <span ng-if="$ctrl.isSorted(header.sortBy || header.dbField) < 0"
+                      class="fa fa-sort text-muted-more"></span>
+                    <span ng-if="$ctrl.isSorted(header.sortBy || header.dbField) >= 0 && $ctrl.getSortOrder(header.sortBy || header.dbField) === 'asc'"
+                      class="fa fa-sort-asc"></span>
+                    <span ng-if="$ctrl.isSorted(header.sortBy || header.dbField) >= 0 && $ctrl.getSortOrder(header.sortBy || header.dbField) === 'desc'"
+                      class="fa fa-sort-desc"></span>
                   </div>
-                </ul> <!-- /multiple field column -->
-              </div> <!-- /column dropdown menu -->
+                  <div class="header-text">{{::header.friendlyName}}</div>
+                </span>
 
-              <!-- sortable column -->
-              <span ng-if="::((header.exp || header.sortBy) && !header.unsortable)"
-                ng-mousedown="$ctrl.mouseDown()" ng-mouseup="$ctrl.mouseUp()"
-                ng-click="$ctrl.sortBy($event, header.sortBy || header.dbField)"
-                class="cursor-pointer">
-                <div class="header-sort">
-                  <span ng-if="$ctrl.isSorted(header.sortBy || header.dbField) < 0"
-                    class="fa fa-sort text-muted-more"></span>
-                  <span ng-if="$ctrl.isSorted(header.sortBy || header.dbField) >= 0 && $ctrl.getSortOrder(header.sortBy || header.dbField) === 'asc'"
-                    class="fa fa-sort-asc"></span>
-                  <span ng-if="$ctrl.isSorted(header.sortBy || header.dbField) >= 0 && $ctrl.getSortOrder(header.sortBy || header.dbField) === 'desc'"
-                    class="fa fa-sort-desc"></span>
+                <!-- non-sortable column -->
+                <div ng-if="::(header.dbField === 'info')" class="cursor-pointer">
+                  {{::header.friendlyName}}
                 </div>
-                <div class="header-text">{{::header.friendlyName}}</div>
-              </span>
 
-              <!-- non-sortable column -->
-              <div ng-if="::(header.dbField === 'info')" class="cursor-pointer">
-                {{::header.friendlyName}}
               </div>
-
             </th> <!-- /table headers -->
           </tr>
         </thead>
