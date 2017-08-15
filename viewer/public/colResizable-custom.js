@@ -1,9 +1,9 @@
 /**
- _ _____           _          _     _
- | |  __ \         (_)        | |   | |
- ___ ___ | | |__) |___  ___ _ ______ _| |__ | | ___
+           _ _____           _          _     _
+          | |  __ \         (_)        | |   | |
+  ___ ___ | | |__) |___  ___ _ ______ _| |__ | | ___
  / __/ _ \| |  _  // _ \/ __| |_  / _` | '_ \| |/ _ \
- | (_| (_) | | | \ \  __/\__ \ |/ / (_| | |_) | |  __/
+| (_| (_) | | | \ \  __/\__ \ |/ / (_| | |_) | |  __/
  \___\___/|_|_|  \_\___||___/_/___\__,_|_.__/|_|\___|
 
  v1.7 - jQuery plugin created by Alvaro Prieto Lauroba
@@ -64,7 +64,6 @@
     // if(!(tb.style.width || tb.width)) t.width(t.width()); //I am not an IE fan at all, but it is a pity that only IE has the currentStyle attribute working as expected. For this reason I can not check easily if the table has an explicit width or if it is rendered as "auto"
     tables[id] = t; 	//the table object is stored using its id as key
     createGrips(t);		//grips are created
-    t.removeClass(FLEX); // TODO ECR - wtf?
   };
 
 
@@ -179,7 +178,7 @@
    * @param {jQuery ref} t - table object
    */
   var syncGrips = function (t){
-    t.removeClass(FLEX);// TODO ECR
+    console.log('sync grips'); // TODO ECR - remove
     t.gc.width(t.w);			//the grip's container width is updated
     for(var i=0; i<t.ln; i++){	//for each column
       var c = t.c[i];
@@ -201,7 +200,6 @@
    * @param {bool} isOver - to identify when the function is being called from the onGripDragOver event
    */
   var syncCols = function(t,i,isOver){
-    t.removeClass(FLEX);// TODO ECR
     var inc = drag.x-drag.l, c = t.c[i], c2 = t.c[i+1];
     var w = c.w + inc;	var w2= c2.w- inc;	//their new width is obtained
     c.width( w + PX);
@@ -218,8 +216,6 @@
     }
   };
 
-  // TODO ECR - document this change
-  var applyBoundsCalls = 0;
   /**
    * This function updates all columns width according to its real width. It must be taken into account that the
    * sum of all columns can exceed the table width in some cases (if fixed is set to false and table has some kind
@@ -227,6 +223,7 @@
    * @param {jQuery ref} t - table object
    */
   var applyBounds = function(t){
+    console.log('apply bounds');
     var w = $.map(t.c, function(c){			//obtain real widths
       return c.width();
     });
@@ -234,11 +231,8 @@
     $.each(t.c, function(i,c){
       c.width(w[i]).w = w[i];				//set column widths applying bounds (table's max-width)
     });
-    // IMPORTANT! only add FLEX class after table has stabilized
-    if (applyBoundsCalls > 1) {
-      t.addClass(FLEX);						//allow table width changes
-    }
-    applyBoundsCalls++;
+    // TODO ECR - need this at all?
+    // t.addClass(FLEX);						//allow table width changes
   };
 
 
@@ -299,30 +293,42 @@
    * @param {event} e - grip's drag over event
    */
   var onGripDragOver = function(e){
+    console.log('on grip drag over');
     d.unbind('touchend.'+SIGNATURE+' mouseup.'+SIGNATURE).unbind('touchmove.'+SIGNATURE+' mousemove.'+SIGNATURE);
     $("head :last-child").remove(); 				//remove the dragging cursor style
     if(!drag) return;
     drag.removeClass(drag.t.opt.draggingClass);		//remove the grip's dragging css-class
     if (!(drag.x - drag.l == 0)) {
       var t = drag.t;
-      // IMPORTANT! the following line is needed so that syncCols calculates column widths appropriately
-      // TODO ECR - need this?
-      t.addClass(FLEX);
       var cb = t.opt.onResize; 	    //get some values
       var i = drag.i;                 //column index
       var last = i == t.ln-1;         //check if it is the last column's grip (usually hidden)
       var c = t.g[i].c;               //the column being dragged
-      if(last){
-        c.width(drag.w);
-        c.w = drag.w;
-      }else{
-        syncCols(t, i, true);	//the columns are updated
-      }
+      // console.log('drag', drag.w);
+      // console.log('table', t);
+      // if(last){
+      //   c.width(drag.w);
+      //   c.w = drag.w;
+      // }else{
+      //   syncCols(t, i, true);	//the columns are updated
+      // }
       // TODO ECR - don't need to apply bounds?
       // if(!t.f) applyBounds(t);	//if not fixed mode, then apply bounds to obtain real width values
+      var inc = drag.x-drag.l;
+
+      if (last) {
+        c.width(drag.w);
+        c.w = drag.w;
+      } else {
+        c.w = c.w + inc;
+        c.width(c.w);
+      }
+
+      t.w = t.w + inc;
+      t.width(t.w);
       syncGrips(t);				//the grips are updated
-      if (cb) { e.currentTarget = t[0]; cb(e); }	//if there is a callback function, it is fired
-      if(t.p && S) memento(t); 	//if postbackSafe is enabled and there is sessionStorage support, the new layout is serialized and stored
+      if (cb) { e.currentTarget = t[0]; cb(e, c, i); }	//if there is a callback function, it is fired
+      // if(t.p && S) memento(t); 	//if postbackSafe is enabled and there is sessionStorage support, the new layout is serialized and stored
     }
     drag = null;   //since the grip's dragging is over
   };
@@ -383,7 +389,8 @@
 
 
   //bind resize event, to update grips position
-  $(window).bind('resize.'+SIGNATURE, onResize);
+  // TODO ECR - we don't need this because the width of the table is not affected by the width of the window
+  // $(window).bind('resize.'+SIGNATURE, onResize);
 
 
   /**
