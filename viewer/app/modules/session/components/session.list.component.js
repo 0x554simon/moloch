@@ -142,7 +142,6 @@
 
     /* Initializes resizable columns */
     initializeColResizable() {
-      console.log('initialize col resize'); // TODO ECR - remove
      $('#sessionsTable').colResizable({
         minWidth        : 50,
         headerOnly      : true,
@@ -319,6 +318,7 @@
       this.headers = [];
       this.colWidths = {};
       this.tableWidth = 80;
+      let infoColWidth = 250; // default info column width
 
       if (localStorage['session-column-widths']) {
         this.colWidths = JSON.parse(localStorage['session-column-widths']);
@@ -332,6 +332,36 @@
           field.width = this.colWidths[headerId] || field.width || 100;
           this.tableWidth += field.width;
           this.headers.push(field);
+          if (field.dbField === 'info') { // info column is super special
+            if (field.width > infoColWidth) { field.width = infoColWidth; }
+            else { infoColWidth = field.width; }
+          }
+        }
+      }
+
+      this.calculateInfoColumnWidth(infoColWidth);
+    }
+
+    calculateInfoColumnWidth(infoColWidth) {
+      console.log('calculate info column width');
+      if (!this.colWidths) { return; }
+      // TODO ECR - on window resize, recalculate this
+      if (!Object.keys(this.colWidths).length) {
+        if (this.tableState.visibleHeaders.indexOf('info') >= 0) {
+          // currently calculated table width minus the default width of the info column
+          let tableWidthWithoutInfoCol = this.tableWidth - infoColWidth;
+          let fullTableWidth = window.innerWidth - 45;
+          infoColWidth = fullTableWidth - tableWidthWithoutInfoCol;
+          this.tableWidth = window.innerWidth - 45; // account for right and left margins
+          if (infoColWidth > 250) {
+            // if the info column is calculated to be larger than the default
+            // update the info header object with the new width
+            for (let i = 0, len = this.headers.length; i < len; ++i) {
+              if (this.headers[i].dbField === 'info') {
+                this.headers[i].width = infoColWidth;
+              }
+            }
+          }
         }
       }
     }
