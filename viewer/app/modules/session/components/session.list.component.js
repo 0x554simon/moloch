@@ -132,16 +132,18 @@
 
     /* fired when controller's containing scope is destroyed */
     $onDestroy() {
-      holdingClick = false;
+      holdingClick  = false;
+      initialized   = false;
 
       if (timeout) { this.$timeout.cancel(timeout); }
+
+      $('#sessionsTable').colResizable({ disable:true });
     }
 
     /* Initializes resizable columns */
     initializeColResizable() {
-      console.log('initialize col resizable'); // TODO ECR - remove
-      let sessionsTable = $('#sessionsTable');
-      sessionsTable.colResizable({
+      console.log('initialize col resize'); // TODO ECR - remove
+     $('#sessionsTable').colResizable({
         minWidth        : 50,
         headerOnly      : true,
         resizeMode      : 'overflow',
@@ -372,7 +374,6 @@
 
     /* reloads the data in the table (even one time bindings) */
     reloadTable() {
-      console.log('reload table'); // TODO ECR - remove
       // disable resizable columns so it can be initialized after table reloads
       $('#sessionsTable').colResizable({ disable:true });
 
@@ -385,7 +386,7 @@
         this.showSessions = true;
         this.$scope.$broadcast('$$rebind::refresh');
 
-        this.initializeColResizable(); // TODO ECR: this gets called multiple times when data is retrieved
+        this.initializeColResizable();
       });
     }
 

@@ -89,7 +89,6 @@
     th = th.filter(":visible");					//filter invisible columns
     t.cg = t.find("col"); 						//a table can also contain a colgroup with col elements
     t.ln = th.length;							//table length is stored
-    if(t.p && S && S[t.id])memento(t,th);		//if 'postbackSafe' is enabled and there is data for the current table, its coloumn layout is restored
     th.each(function(i){						//iterate through the table column headers
       var c = $(this); 						//jquery wrap for the current column
 
@@ -125,46 +124,6 @@
     //there is a small problem, some cells in the table could contain dimension values interfering with the
     //width value set by this plugin. Those values are removed
 
-  };
-
-
-  /**
-   * Function to allow the persistence of columns dimensions after a browser postback. It is based in
-   * the HTML5 sessionStorage object, which can be emulated for older browsers using sessionstorage.js
-   * @param {jQuery ref} t - table object
-   * @param {jQuery ref} th - reference to the first row elements (only set in deserialization)
-   */
-  var memento = function(t, th){
-    var w,m=0,i=0,aux =[],tw;
-    if(th){										//in deserialization mode (after a postback)
-      t.cg.removeAttr("width");
-      if(t.opt.flush){ S[t.id] =""; return;} 	//if flush is activated, stored data is removed
-      w = S[t.id].split(";");					//column widths is obtained
-      tw = w[t.ln+1];
-      if(!t.f && tw){							//if not fixed and table width data available its size is restored
-        t.width(tw*=1);
-        if(t.opt.overflow) {				//if overfolw flag is set, restore table width also as table min-width
-          t.css('min-width', tw + PX);
-          t.w = tw;
-        }
-      }
-      for(;i<t.ln;i++){						//for each column
-        aux.push(100*w[i]/w[t.ln]+"%"); 	//width is stored in an array since it will be required again a couple of lines ahead
-        th.eq(i).css("width", aux[i] ); 	//each column width in % is restored
-      }
-      for(i=0;i<t.ln;i++)
-        t.cg.eq(i).css("width", aux[i]);	//this code is required in order to create an inline CSS rule with higher precedence than an existing CSS class in the "col" elements
-    }else{							//in serialization mode (after resizing a column)
-      S[t.id] ="";				//clean up previous data
-      for(;i < t.c.length; i++){	//iterate through columns
-        w = t.c[i].width();		//width is obtained
-        S[t.id] += w+";";		//width is appended to the sessionStorage object using ID as key
-        m+=w;					//carriage is updated to obtain the full size used by columns
-      }
-      S[t.id]+=m;							//the last item of the serialized string is the table's active area (width),
-      //to be able to obtain % width value of each columns while deserializing
-      if(!t.f) S[t.id] += ";"+t.width(); 	//if not fixed, table width is stored
-    }
   };
 
 
@@ -210,22 +169,6 @@
     }
   };
 
-  /**
-   * This function updates all columns width according to its real width. It must be taken into account that the
-   * sum of all columns can exceed the table width in some cases (if fixed is set to false and table has some kind
-   * of max-width).
-   * @param {jQuery ref} t - table object
-   */
-  var applyBounds = function(t){
-    var w = $.map(t.c, function(c){			//obtain real widths
-      return c.width();
-    });
-    t.width(t.w = t.width()).removeClass(FLEX);	//prevent table width changes
-    $.each(t.c, function(i,c){
-      c.width(w[i]).w = w[i];				//set column widths applying bounds (table's max-width)
-    });
-  };
-
 
   /**
    * Event handler used while dragging a grip. It checks if the next grip's position is valid and updates it.
@@ -248,32 +191,9 @@
        Infinity; 								//max position according to the contiguous cells
     x = M.max(min, M.min(max, x));				//apply bounding
     drag.x = x;	 drag.css("left",  x + PX); 	//apply position increment
-    if(last){									//if it is the last grip
+    if (last) {
       var c = t.c[drag.i];					//width of the last column is obtained
       drag.w = c.w + x- drag.l;
-    }
-    if(t.opt.liveDrag){ 			//if liveDrag is enabled
-      if(last){
-        c.width(drag.w);
-        if(!t.f && t.opt.overflow){			//if overflow is set, incriment min-width to force overflow
-          t.css('min-width', t.w + x - drag.l);
-        }else {
-          t.w = t.width();
-        }
-      }else{
-        syncCols(t,i); 			//columns are synchronized
-      }
-      syncGrips(t);
-      var cb = t.opt.onDrag;							//check if there is an onDrag callback
-      if (cb) { e.currentTarget = t[0]; cb(e); }		//if any, it is fired
-    } else if (last) {
-      // IMPORTANT! Added this so that modifying the last column still updates the table width
-      c.width(drag.w);
-      if(!t.f && t.opt.overflow){			//if overflow is set, incriment min-width to force overflow
-        t.css('min-width', t.w + x - drag.l);
-      }else {
-        t.w = t.width();
-      }
     }
     return false; 	//prevent text selection while dragging
   };
@@ -294,14 +214,7 @@
       var i = drag.i;                 //column index
       var last = i == t.ln-1;         //check if it is the last column's grip (usually hidden)
       var c = t.g[i].c;               //the column being dragged
-      // if(last){
-      //   c.width(drag.w);
-      //   c.w = drag.w;
-      // }else{
-      //   syncCols(t, i, true);	//the columns are updated
-      // }
-      // TODO ECR - don't need to apply bounds?
-      // if(!t.f) applyBounds(t);	//if not fixed mode, then apply bounds to obtain real width values
+
       var inc = drag.x-drag.l;
 
       if (last) {
@@ -316,7 +229,6 @@
       t.width(t.w);
       syncGrips(t);				//the grips are updated
       if (cb) { e.currentTarget = t[0]; cb(e, c, i, t.w); }	//if there is a callback function, it is fired
-      // if(t.p && S) memento(t); 	//if postbackSafe is enabled and there is sessionStorage support, the new layout is serialized and stored
     }
     drag = null;   //since the grip's dragging is over
   };
