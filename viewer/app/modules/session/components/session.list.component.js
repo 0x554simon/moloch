@@ -137,6 +137,28 @@
       if (timeout) { this.$timeout.cancel(timeout); }
     }
 
+    /* Initializes resizable columns */
+    initializeColResizable() {
+      console.log('initialize col resizable'); // TODO ECR - remove
+      let sessionsTable = $('#sessionsTable');
+      sessionsTable.colResizable({
+        minWidth        : 50,
+        headerOnly      : true,
+        resizeMode      : 'overflow',
+        disabledColumns : [0],
+        hoverCursor     : 'col-resize',
+        onResize        : (event, column, colIdx, tableWidth) => {
+          let header = this.headers[colIdx-1];
+          if (header) {
+            header.width = column.w;
+            this.colWidths[header.dbField] = column.w;
+            this.tableWidth = tableWidth;
+            localStorage['session-column-widths'] = JSON.stringify(this.colWidths);
+          }
+        }
+      });
+    }
+
 
     /* data retrieve/setup/update ------------------------------------------ */
     /**
@@ -185,11 +207,8 @@
             this.openAll();
           }
 
-          // TODO ECR - this gets called every time a query is issued (probably not a good idea)
-          if (!initialized) {
-            console.log('initialize col resizable from getData()');
-            this.initializeColResizable();
-          }
+          // initialize resizable columns now that there is data
+          if (!initialized) { this.initializeColResizable(); }
 
           initialized = true;
         })
@@ -219,8 +238,6 @@
              this.loading  = false;
              this.error    = 'Now, issue a query!';
            }
-
-           // initialized = true; // TODO ECR - moved this to getData func
          })
          .catch((error) => {
            this.error = error;
@@ -297,9 +314,9 @@
      * Maps visible column headers to their corresponding fields
      */
     mapHeadersToFields() {
-      console.log('map headers to fields'); // TODO ECR - remove
       this.headers = [];
       this.colWidths = {};
+      this.tableWidth = 80;
 
       if (localStorage['session-column-widths']) {
         this.colWidths = JSON.parse(localStorage['session-column-widths']);
@@ -310,13 +327,11 @@
         let field     = this.getField(headerId);
 
         if (field) {
-          if (this.colWidths && this.colWidths[headerId]) {
-            field.width = this.colWidths[headerId];
-          }
+          field.width = this.colWidths[headerId] || field.width || 100;
+          this.tableWidth += field.width;
           this.headers.push(field);
         }
       }
-      console.log('headers', this.headers);
     }
 
     /**
@@ -370,7 +385,6 @@
         this.showSessions = true;
         this.$scope.$broadcast('$$rebind::refresh');
 
-        console.log('initialize col resizable from reloadTable()');
         this.initializeColResizable(); // TODO ECR: this gets called multiple times when data is retrieved
       });
     }
@@ -628,9 +642,13 @@
         this.tableState.visibleHeaders.push(id);
       }
 
-      this.reloadTable();
+      // this.reloadTable();
 
-      if (reloadData) { this.getData(true); } // need data from the server
+      if (reloadData) { this.getData(true); } // need data from the server (reloads table)
+      else {
+        this.mapHeadersToFields();
+        this.reloadTable();
+      }
 
       this.saveTableState(true);
     }
@@ -762,25 +780,6 @@
      */
     isArray(value) {
       return angular.isArray(value);
-    }
-
-    /* Initializes resizable columns */
-    initializeColResizable() {
-      console.log('initialize col resizable'); // TODO ECR - remove
-      let sessionsTable = $('#sessionsTable');
-      sessionsTable.colResizable({
-        minWidth        : 50,
-        headerOnly      : true,
-        resizeMode      : 'overflow',
-        disabledColumns : [0],
-        hoverCursor     : 'col-resize',
-        onResize        : (event, column, index) => {
-          // TODO ECR - check for existence of this.headers[index-1]
-          this.headers[index-1].width = column.w;
-          this.colWidths[this.headers[index-1].dbField] = column.w;
-          localStorage['session-column-widths'] = JSON.stringify(this.colWidths);
-        }
-      });
     }
 
   }

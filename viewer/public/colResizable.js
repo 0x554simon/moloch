@@ -84,7 +84,6 @@
    * @param {jQuery ref} t - table object
    */
   var createGrips = function(t){
-    console.log('create grips');// TODO ECR - remove
     var th = t.find(">thead>tr:first>th,>thead>tr:first>td"); //table headers are obtained
     if(!th.length) th = t.find(">tbody>tr:first>th,>tr:first>th,>tbody>tr:first>td, >tr:first>td");	 //but headers can also be included in different ways
     th = th.filter(":visible");					//filter invisible columns
@@ -112,8 +111,7 @@
 
       g.t = t; g.i = i; g.c = c;	c.w =c.width();		//some values are stored in the grip's node data as shortcut
       t.g.push(g); t.c.push(c);						//the current grip and column are added to its table object
-      // if (i === 0) { c.w = 80; }  // TODO ECR - the first column is always a static width
-      // console.log(i, c.w);        // TODO ECR - remove
+
       c.width(c.w).removeAttr("width");				//the width of the column is converted into pixel-based measurements
       g.data(SIGNATURE, {i:i, t:t.attr(ID), last: i == t.ln-1});	 //grip index and its table name are stored in the HTML
     });
@@ -122,10 +120,7 @@
     t.find('td, th').not(th).not('table th, table td').each(function(){
       $(this).removeAttr('width');	//the width attribute is removed from all table cells which are not nested in other tables and dont belong to the header
     });
-    if(!t.f){
-      // TODO ECR - removing this fixes table reload grips in wrong place
-      // t.removeAttr('width').addClass(FLEX); //if not fixed, let the table grow as needed
-    }
+
     syncGrips(t); 				//the grips are positioned according to the current table layout
     //there is a small problem, some cells in the table could contain dimension values interfering with the
     //width value set by this plugin. Those values are removed
@@ -178,7 +173,6 @@
    * @param {jQuery ref} t - table object
    */
   var syncGrips = function (t){
-    console.log('sync grips'); // TODO ECR - remove
     t.gc.width(t.w);			//the grip's container width is updated
     for(var i=0; i<t.ln; i++){	//for each column
       var c = t.c[i];
@@ -223,7 +217,6 @@
    * @param {jQuery ref} t - table object
    */
   var applyBounds = function(t){
-    console.log('apply bounds');
     var w = $.map(t.c, function(c){			//obtain real widths
       return c.width();
     });
@@ -231,8 +224,6 @@
     $.each(t.c, function(i,c){
       c.width(w[i]).w = w[i];				//set column widths applying bounds (table's max-width)
     });
-    // TODO ECR - need this at all?
-    // t.addClass(FLEX);						//allow table width changes
   };
 
 
@@ -293,7 +284,6 @@
    * @param {event} e - grip's drag over event
    */
   var onGripDragOver = function(e){
-    console.log('on grip drag over');
     d.unbind('touchend.'+SIGNATURE+' mouseup.'+SIGNATURE).unbind('touchmove.'+SIGNATURE+' mousemove.'+SIGNATURE);
     $("head :last-child").remove(); 				//remove the dragging cursor style
     if(!drag) return;
@@ -304,8 +294,6 @@
       var i = drag.i;                 //column index
       var last = i == t.ln-1;         //check if it is the last column's grip (usually hidden)
       var c = t.g[i].c;               //the column being dragged
-      // console.log('drag', drag.w);
-      // console.log('table', t);
       // if(last){
       //   c.width(drag.w);
       //   c.w = drag.w;
@@ -327,7 +315,7 @@
       t.w = t.w + inc;
       t.width(t.w);
       syncGrips(t);				//the grips are updated
-      if (cb) { e.currentTarget = t[0]; cb(e, c, i); }	//if there is a callback function, it is fired
+      if (cb) { e.currentTarget = t[0]; cb(e, c, i, t.w); }	//if there is a callback function, it is fired
       // if(t.p && S) memento(t); 	//if postbackSafe is enabled and there is sessionStorage support, the new layout is serialized and stored
     }
     drag = null;   //since the grip's dragging is over
@@ -360,32 +348,32 @@
    * Event handler fired when the browser is resized. The main purpose of this function is to update
    * table layout according to the browser's size synchronizing related grips
    */
-  var onResize = function(){
-    for(var t in tables){
-      if( tables.hasOwnProperty( t ) ) {
-        t = tables[t];
-        var i, mw=0;
-        t.removeClass(SIGNATURE);   //firefox doesn't like layout-fixed in some cases
-        if (t.f) {                  //in fixed mode
-          t.w = t.width();        //its new width is kept
-          for(i=0; i<t.ln; i++) mw+= t.c[i].w;
-          //cell rendering is not as trivial as it might seem, and it is slightly different for
-          //each browser. In the beginning i had a big switch for each browser, but since the code
-          //was extremely ugly now I use a different approach with several re-flows. This works
-          //pretty well but it's a bit slower. For now, lets keep things simple...
-          for(i=0; i<t.ln; i++) t.c[i].css("width", M.round(1000*t.c[i].w/mw)/10 + "%").l=true;
-          //c.l locks the column, telling us that its c.w is outdated
-        }else{     //in non fixed-sized tables
-          applyBounds(t);         //apply the new bounds
-          if(t.mode == 'flex' && t.p && S){   //if postbackSafe is enabled and there is sessionStorage support,
-            memento(t);                     //the new layout is serialized and stored for 'flex' tables
-          }
-        }
-        syncGrips(t.addClass(SIGNATURE));
-      }
-    }
-
-  };
+  // var onResize = function(){
+  //   for(var t in tables){
+  //     if( tables.hasOwnProperty( t ) ) {
+  //       t = tables[t];
+  //       var i, mw=0;
+  //       t.removeClass(SIGNATURE);   //firefox doesn't like layout-fixed in some cases
+  //       if (t.f) {                  //in fixed mode
+  //         t.w = t.width();        //its new width is kept
+  //         for(i=0; i<t.ln; i++) mw+= t.c[i].w;
+  //         //cell rendering is not as trivial as it might seem, and it is slightly different for
+  //         //each browser. In the beginning i had a big switch for each browser, but since the code
+  //         //was extremely ugly now I use a different approach with several re-flows. This works
+  //         //pretty well but it's a bit slower. For now, lets keep things simple...
+  //         for(i=0; i<t.ln; i++) t.c[i].css("width", M.round(1000*t.c[i].w/mw)/10 + "%").l=true;
+  //         //c.l locks the column, telling us that its c.w is outdated
+  //       }else{     //in non fixed-sized tables
+  //         applyBounds(t);         //apply the new bounds
+  //         if(t.mode == 'flex' && t.p && S){   //if postbackSafe is enabled and there is sessionStorage support,
+  //           memento(t);                     //the new layout is serialized and stored for 'flex' tables
+  //         }
+  //       }
+  //       syncGrips(t.addClass(SIGNATURE));
+  //     }
+  //   }
+  //
+  // };
 
 
   //bind resize event, to update grips position
