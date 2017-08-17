@@ -346,13 +346,13 @@
 
         if (field) {
           field.width = this.colWidths[headerId] || field.width || 100;
-          this.tableWidth += field.width;
-          this.headers.push(field);
           if (field.dbField === 'info') { // info column is super special
             // reset info field width to default so it can always be recalculated
             // to take up all of the rest of the space that it can
             field.width = defaultInfoColWidth;
           }
+          this.tableWidth += field.width;
+          this.headers.push(field);
         }
       }
 
