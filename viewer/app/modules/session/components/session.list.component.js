@@ -166,13 +166,16 @@
         disabledColumns : [0],
         hoverCursor     : 'col-resize',
         onResize        : (event, column, colIdx, tableWidth) => {
-          let header = this.headers[colIdx-1];
-          if (header) {
-            header.width = column.w;
-            this.colWidths[header.dbField] = column.w;
-            this.tableWidth = tableWidth;
-            localStorage['session-column-widths'] = JSON.stringify(this.colWidths);
-          }
+          this.$scope.$apply(() => {
+            let header = this.headers[colIdx-1];
+            if (header) {
+              header.width = column.w;
+              this.colWidths[header.dbField] = column.w;
+              localStorage['session-column-widths'] = JSON.stringify(this.colWidths);
+              // TODO ECR - just do calculateInfoColumnWidth (need to calculate sum of non-info columns)
+              this.mapHeadersToFields();
+            }
+          });
         }
       });
     }
@@ -334,7 +337,7 @@
     mapHeadersToFields() {
       this.headers = [];
       this.colWidths = {};
-      this.tableWidth = 80;
+      this.sumOfColWidths = 80;
 
       if (localStorage['session-column-widths']) {
         this.colWidths = JSON.parse(localStorage['session-column-widths']);
@@ -350,8 +353,10 @@
             // reset info field width to default so it can always be recalculated
             // to take up all of the rest of the space that it can
             field.width = defaultInfoColWidth;
+          } else { // don't account for info column's width because it changes
+            // TODO ECR - put this in calculateInfoColumnWidth
+            this.sumOfColWidths += field.width;
           }
-          this.tableWidth += field.width;
           this.headers.push(field);
         }
       }
@@ -361,29 +366,31 @@
 
     /**
      * Calculates the info column's width based on the width of the window
-     * If the user has not set column widths, and the info column is visible,
-     * the info column should take up whatever space is left in the table
+     * If the info column is visible, it should take up whatever space is left
      * @param infoColWidth
      */
     calculateInfoColumnWidth(infoColWidth) {
       if (!this.colWidths) { return; }
-      if (!Object.keys(this.colWidths).length) {
-        if (this.tableState.visibleHeaders.indexOf('info') >= 0) {
-          // register listener to update info column width on window resize
-          this.$window.addEventListener('resize', windowResizeEvent);
-          let fullTableWidth  = window.innerWidth - 45; // account for right and left margins
-          let fillWithInfoCol = fullTableWidth - this.tableWidth;
-          if (fillWithInfoCol > 0) { // if there is room for the info column to fill
-            for (let i = 0, len = this.headers.length; i < len; ++i) {
-              if (this.headers[i].dbField === 'info') {
-                this.headers[i].width = infoColWidth + fillWithInfoCol;
-              }
-            }
+      if (this.tableState.visibleHeaders.indexOf('info') >= 0) {
+        // register listener to update info column width on window resize
+        this.$window.addEventListener('resize', windowResizeEvent);
+        let windowWidth  = window.innerWidth - 45; // account for right and left margins
+        let fillWithInfoCol = windowWidth - this.sumOfColWidths;
+        let newTableWidth = this.sumOfColWidths;
+        for (let i = 0, len = this.headers.length; i < len; ++i) {
+          if (this.headers[i].dbField === 'info') {
+            let newInfoColWidth = Math.max(fillWithInfoCol, infoColWidth);
+            this.headers[i].width = newInfoColWidth;
+            newTableWidth += newInfoColWidth;
           }
-        } else {
-          // there is no info column, so no need to watch for window resize
-          this.$window.removeEventListener('resize', windowResizeEvent);
         }
+        this.tableWidth = newTableWidth;
+        $('#sessionsTable').colResizable({ disable:true });
+        this.$timeout(() => { this.initializeColResizable(); });
+      } else {
+        this.tableWidth = this.sumOfColWidths;
+        // there is no info column, so no need to watch for window resize
+        this.$window.removeEventListener('resize', windowResizeEvent);
       }
     }
 

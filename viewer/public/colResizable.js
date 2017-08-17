@@ -217,6 +217,7 @@
 
       var inc = drag.x-drag.l;
 
+      // TODO ECR - maybe let session.list.component set the column width?
       if (last) {
         c.width(drag.w);
         c.w = drag.w;
@@ -225,8 +226,9 @@
         c.width(c.w);
       }
 
-      t.w = t.w + inc;
-      t.width(t.w);
+      // TODO ECR - let session.list.component set the table width
+      // t.w = t.w + inc;
+      // t.width(t.w);
       syncGrips(t);				//the grips are updated
       if (cb) { e.currentTarget = t[0]; cb(e, c, i, t.w); }	//if there is a callback function, it is fired
     }
