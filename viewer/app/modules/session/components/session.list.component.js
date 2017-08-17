@@ -18,6 +18,9 @@
 
   let holdingClick = false, initialized = false, timeout;
 
+  // window/table resize variables
+  let resizeTimeout, windowResizeEvent, defaultInfoColWidth = 250;
+
   /**
    * @class SessionListController
    * @classdesc Interacts with session list
@@ -28,6 +31,7 @@
     /**
      * Initialize global variables for this controller
      * @param $scope          Angular application model object
+     * @param $window         Angular reference to the browser's window object
      * @param $timeout        Angular's wrapper for window.setTimeout
      * @param $location       Exposes browser address bar URL (based on the window.location)
      * @param $routeParams    Retrieve the current set of route parameters
@@ -38,10 +42,11 @@
      *
      * @ngInject
      */
-    constructor($scope, $timeout, $location, $routeParams, $anchorScroll,
+    constructor($scope, $window, $timeout, $location, $routeParams, $anchorScroll,
       SessionService, FieldService, UserService) {
 
       this.$scope         = $scope;
+      this.$window        = $window;
       this.$timeout       = $timeout;
       this.$location      = $location;
       this.$routeParams   = $routeParams;
@@ -128,6 +133,16 @@
         // notify children (namely search component)
         this.$scope.$broadcast('update:time', args);
       });
+
+      // watch for window resizing and update the info column width
+      // this is only registered when the user has not set widths for any
+      // columns && the info column is visible
+      windowResizeEvent = () => {
+        if (resizeTimeout) { this.$timeout.cancel(resizeTimeout); }
+        resizeTimeout = this.$timeout(() => {
+          this.calculateInfoColumnWidth(defaultInfoColWidth);
+        }, 300);
+      };
     } /* /$onInit */
 
     /* fired when controller's containing scope is destroyed */
@@ -138,6 +153,8 @@
       if (timeout) { this.$timeout.cancel(timeout); }
 
       $('#sessionsTable').colResizable({ disable:true });
+
+      this.$window.removeEventListener('resize', windowResizeEvent);
     }
 
     /* Initializes resizable columns */
@@ -318,7 +335,6 @@
       this.headers = [];
       this.colWidths = {};
       this.tableWidth = 80;
-      let infoColWidth = 250; // default info column width
 
       if (localStorage['session-column-widths']) {
         this.colWidths = JSON.parse(localStorage['session-column-widths']);
@@ -333,35 +349,40 @@
           this.tableWidth += field.width;
           this.headers.push(field);
           if (field.dbField === 'info') { // info column is super special
-            if (field.width > infoColWidth) { field.width = infoColWidth; }
-            else { infoColWidth = field.width; }
+            // reset info field width to default so it can always be recalculated
+            // to take up all of the rest of the space that it can
+            field.width = defaultInfoColWidth;
           }
         }
       }
 
-      this.calculateInfoColumnWidth(infoColWidth);
+      this.calculateInfoColumnWidth(defaultInfoColWidth);
     }
 
+    /**
+     * Calculates the info column's width based on the width of the window
+     * If the user has not set column widths, and the info column is visible,
+     * the info column should take up whatever space is left in the table
+     * @param infoColWidth
+     */
     calculateInfoColumnWidth(infoColWidth) {
-      console.log('calculate info column width');
       if (!this.colWidths) { return; }
-      // TODO ECR - on window resize, recalculate this
       if (!Object.keys(this.colWidths).length) {
         if (this.tableState.visibleHeaders.indexOf('info') >= 0) {
-          // currently calculated table width minus the default width of the info column
-          let tableWidthWithoutInfoCol = this.tableWidth - infoColWidth;
-          let fullTableWidth = window.innerWidth - 45;
-          infoColWidth = fullTableWidth - tableWidthWithoutInfoCol;
-          this.tableWidth = window.innerWidth - 45; // account for right and left margins
-          if (infoColWidth > 250) {
-            // if the info column is calculated to be larger than the default
-            // update the info header object with the new width
+          // register listener to update info column width on window resize
+          this.$window.addEventListener('resize', windowResizeEvent);
+          let fullTableWidth  = window.innerWidth - 45; // account for right and left margins
+          let fillWithInfoCol = fullTableWidth - this.tableWidth;
+          if (fillWithInfoCol > 0) { // if there is room for the info column to fill
             for (let i = 0, len = this.headers.length; i < len; ++i) {
               if (this.headers[i].dbField === 'info') {
-                this.headers[i].width = infoColWidth;
+                this.headers[i].width = infoColWidth + fillWithInfoCol;
               }
             }
           }
+        } else {
+          // there is no info column, so no need to watch for window resize
+          this.$window.removeEventListener('resize', windowResizeEvent);
         }
       }
     }
@@ -673,8 +694,6 @@
         this.tableState.visibleHeaders.push(id);
       }
 
-      // this.reloadTable();
-
       if (reloadData) { this.getData(true); } // need data from the server (reloads table)
       else {
         this.mapHeadersToFields();
@@ -815,7 +834,7 @@
 
   }
 
-  SessionListController.$inject = ['$scope', '$timeout', '$location',
+  SessionListController.$inject = ['$scope', '$window', '$timeout', '$location',
     '$routeParams', '$anchorScroll', 'SessionService', 'FieldService', 'UserService'];
 
 
