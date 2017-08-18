@@ -233,6 +233,23 @@
     return false; 	//prevent text selection
   };
 
+  var resizeTimeout;
+  var onResize = function(){
+    if (resizeTimeout) { clearTimeout(resizeTimeout); }
+    resizeTimeout = window.setTimeout(function() {
+      for(var t in tables){
+        if( tables.hasOwnProperty( t ) ) {
+          t = tables[t];
+          syncGrips(t);
+        }
+      }
+    }, 500);
+  };
+
+
+  //bind resize event, to update grips position
+  $(window).bind('resize.'+SIGNATURE, onResize);
+
 
   /**
    * The plugin is added to the jQuery library

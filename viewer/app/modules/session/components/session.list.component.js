@@ -140,7 +140,7 @@
       windowResizeEvent = () => {
         if (resizeTimeout) { this.$timeout.cancel(resizeTimeout); }
         resizeTimeout = this.$timeout(() => {
-          this.calculateInfoColumnWidth(defaultInfoColWidth);
+          this.mapHeadersToFields();
         }, 300);
       };
     } /* /$onInit */
