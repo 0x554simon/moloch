@@ -143,33 +143,6 @@
   };
 
 
-
-  /**
-   * This function updates column's width according to the horizontal position increment of the grip being
-   * dragged. The function can be called while dragging if liveDragging is enabled and also from the onGripDragOver
-   * event handler to synchronize grip's position with their related columns.
-   * @param {jQuery ref} t - table object
-   * @param {number} i - index of the grip being dragged
-   * @param {bool} isOver - to identify when the function is being called from the onGripDragOver event
-   */
-  var syncCols = function(t,i,isOver){
-    var inc = drag.x-drag.l, c = t.c[i], c2 = t.c[i+1];
-    var w = c.w + inc;	var w2= c2.w- inc;	//their new width is obtained
-    c.width( w + PX);
-    t.cg.eq(i).width( w + PX);
-    if(t.f){ //if fixed mode
-      c2.width(w2 + PX);
-      t.cg.eq(i+1).width( w2 + PX);
-    }else if(t.opt.overflow) {				//if overflow is set, incriment min-width to force overflow
-      t.css('min-width', t.w + inc);
-    }
-    if(isOver){
-      c.w=w;
-      c2.w= t.f ? w2 : c2.w;
-    }
-  };
-
-
   /**
    * Event handler used while dragging a grip. It checks if the next grip's position is valid and updates it.
    * @param {event} e - mousemove event binded to the window object
@@ -217,7 +190,6 @@
 
       var inc = drag.x-drag.l;
 
-      // TODO ECR - maybe let session.list.component set the column width?
       if (last) {
         c.width(drag.w);
         c.w = drag.w;
@@ -226,11 +198,15 @@
         c.width(c.w);
       }
 
-      // TODO ECR - let session.list.component set the table width
-      // t.w = t.w + inc;
-      // t.width(t.w);
-      syncGrips(t);				//the grips are updated
-      if (cb) { e.currentTarget = t[0]; cb(e, c, i, t.w); }	//if there is a callback function, it is fired
+      // wait for UI to update to sync the grips
+      // the calculation for the table's width happens in session.list.component.js
+      // because the info column is super special
+      window.setTimeout(function() {
+        t.w = t.width();    // update the table with
+        syncGrips(t);				// the grips are updated
+      }, 300);
+
+      if (cb) { e.currentTarget = t[0]; cb(e, c, i); }	//if there is a callback function, it is fired
     }
     drag = null;   //since the grip's dragging is over
   };
@@ -256,43 +232,6 @@
     if(t.c[o.i].l) for(var i=0,c; i<t.ln; i++){ c=t.c[i]; c.l = false; c.w= c.width(); } 	//if the colum is locked (after browser resize), then c.w must be updated
     return false; 	//prevent text selection
   };
-
-
-  /**
-   * Event handler fired when the browser is resized. The main purpose of this function is to update
-   * table layout according to the browser's size synchronizing related grips
-   */
-  // var onResize = function(){
-  //   for(var t in tables){
-  //     if( tables.hasOwnProperty( t ) ) {
-  //       t = tables[t];
-  //       var i, mw=0;
-  //       t.removeClass(SIGNATURE);   //firefox doesn't like layout-fixed in some cases
-  //       if (t.f) {                  //in fixed mode
-  //         t.w = t.width();        //its new width is kept
-  //         for(i=0; i<t.ln; i++) mw+= t.c[i].w;
-  //         //cell rendering is not as trivial as it might seem, and it is slightly different for
-  //         //each browser. In the beginning i had a big switch for each browser, but since the code
-  //         //was extremely ugly now I use a different approach with several re-flows. This works
-  //         //pretty well but it's a bit slower. For now, lets keep things simple...
-  //         for(i=0; i<t.ln; i++) t.c[i].css("width", M.round(1000*t.c[i].w/mw)/10 + "%").l=true;
-  //         //c.l locks the column, telling us that its c.w is outdated
-  //       }else{     //in non fixed-sized tables
-  //         applyBounds(t);         //apply the new bounds
-  //         if(t.mode == 'flex' && t.p && S){   //if postbackSafe is enabled and there is sessionStorage support,
-  //           memento(t);                     //the new layout is serialized and stored for 'flex' tables
-  //         }
-  //       }
-  //       syncGrips(t.addClass(SIGNATURE));
-  //     }
-  //   }
-  //
-  // };
-
-
-  //bind resize event, to update grips position
-  // TODO ECR - we don't need this because the width of the table is not affected by the width of the window
-  // $(window).bind('resize.'+SIGNATURE, onResize);
 
 
   /**

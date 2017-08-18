@@ -165,14 +165,13 @@
         resizeMode      : 'overflow',
         disabledColumns : [0],
         hoverCursor     : 'col-resize',
-        onResize        : (event, column, colIdx, tableWidth) => {
+        onResize        : (event, column, colIdx) => {
           this.$scope.$apply(() => {
             let header = this.headers[colIdx-1];
             if (header) {
               header.width = column.w;
               this.colWidths[header.dbField] = column.w;
               localStorage['session-column-widths'] = JSON.stringify(this.colWidths);
-              // TODO ECR - just do calculateInfoColumnWidth (need to calculate sum of non-info columns)
               this.mapHeadersToFields();
             }
           });
@@ -354,7 +353,6 @@
             // to take up all of the rest of the space that it can
             field.width = defaultInfoColWidth;
           } else { // don't account for info column's width because it changes
-            // TODO ECR - put this in calculateInfoColumnWidth
             this.sumOfColWidths += field.width;
           }
           this.headers.push(field);
@@ -385,8 +383,6 @@
           }
         }
         this.tableWidth = newTableWidth;
-        $('#sessionsTable').colResizable({ disable:true });
-        this.$timeout(() => { this.initializeColResizable(); });
       } else {
         this.tableWidth = this.sumOfColWidths;
         // there is no info column, so no need to watch for window resize
